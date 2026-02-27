@@ -188,14 +188,10 @@
     <div id="apiForm">
       <div class="section-label" style="margin-bottom:0.5rem;">API Key</div>
       <div class="api-form">
-        <select id="providerSelect">
-          <option value="gemini">Gemini (Google)</option>
-          <option value="groq">Groq</option>
-          <option value="openai">OpenAI</option>
-        </select>
-        <input type="password" id="apiKeyInput" placeholder="Paste API key..." style="flex:1;min-width:180px;">
-        <button class="btn-sm" onclick="saveApiKey()">Save</button>
+        <input type="password" id="apiKeyInput" placeholder="Paste any API key — provider auto-detected" style="flex:1;min-width:220px;" oninput="onKeyInput(this.value)">
+        <button class="btn-sm" id="saveKeyBtn" onclick="saveApiKey()" disabled>Use</button>
       </div>
+      <div id="keyDetectBadge" style="margin-top:0.4rem; font-size:12px; color:var(--fg-muted);"></div>
     </div>
   </div>
   <div style="margin-bottom:1rem;">
@@ -272,6 +268,44 @@
 </script>
 <script>
   const STORAGE_KEY = 'safe_account';
+
+  const PROVIDERS = {
+    groq:      { name: 'Groq',             prefix: 'gsk_',    model: 'llama-3.3-70b-versatile' },
+    gemini:    { name: 'Gemini',           prefix: 'AIza',    model: 'gemini-2.0-flash' },
+    anthropic: { name: 'Anthropic (Claude)', prefix: 'sk-ant-', model: 'claude-haiku-4-5-20251001' },
+    openai:    { name: 'OpenAI',           prefix: 'sk-',     model: 'gpt-4o-mini' },
+    fireworks: { name: 'Fireworks AI',     prefix: 'fw_',     model: 'accounts/fireworks/models/llama-v3p3-70b-instruct' },
+    huggingface: { name: 'HuggingFace',   prefix: 'hf_',     model: 'meta-llama/Llama-3.1-70B-Instruct' },
+  };
+
+  function detectProvider(key) {
+    const k = (key || '').trim();
+    // Order matters — sk-ant- must come before sk-
+    for (const [id, cfg] of Object.entries(PROVIDERS)) {
+      if (k.startsWith(cfg.prefix)) return id;
+    }
+    return null;
+  }
+
+  function onKeyInput(val) {
+    const badge = document.getElementById('keyDetectBadge');
+    const btn = document.getElementById('saveKeyBtn');
+    const provider = detectProvider(val);
+    if (provider) {
+      const cfg = PROVIDERS[provider];
+      badge.innerHTML = '\u2713 Detected: <strong>' + cfg.name + '</strong> &mdash; will use <code>' + cfg.model + '</code>';
+      badge.style.color = 'var(--accent)';
+      btn.disabled = false;
+    } else if (val.trim().length > 10) {
+      badge.innerHTML = 'Provider unknown &mdash; will attempt OpenAI-compatible format';
+      badge.style.color = 'var(--fg-muted)';
+      btn.disabled = false;
+    } else {
+      badge.innerHTML = '';
+      btn.disabled = true;
+    }
+  }
+
   const RUBRIC = [
     { name: 'Hypothesis', max: 15, key: 'hypothesis',
       desc: 'Author clearly states the intent of the paper and the problem it attempts to solve' },
@@ -322,12 +356,13 @@
   }
 
   function saveApiKey() {
-    const provider = document.getElementById('providerSelect').value;
     const key = document.getElementById('apiKeyInput').value.trim();
-    if (!key) { alert('Please enter an API key.'); return; }
+    if (!key) return;
+    const provider = detectProvider(key) || 'openai';
     sessionStorage.setItem('temp_llm_key', key);
     sessionStorage.setItem('temp_llm_provider', provider);
-    document.getElementById('chipProvider').textContent = provider;
+    const cfg = PROVIDERS[provider];
+    document.getElementById('chipProvider').textContent = cfg ? cfg.name : provider;
     document.getElementById('apiChip').style.display = 'block';
     document.getElementById('apiForm').style.display = 'none';
   }
@@ -445,39 +480,62 @@ ${paperText}
   }
 
   async function callLLM(prompt, creds) {
-    if (creds.provider === 'gemini') {
+    const provider = creds.provider || 'openai';
+    const cfg = PROVIDERS[provider];
+    const model = cfg ? cfg.model : 'gpt-4o-mini';
+
+    // Gemini — unique request format
+    if (provider === 'gemini') {
       const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + creds.key,
+        'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + creds.key,
         { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) }
       );
-      if (!res.ok) throw new Error('Gemini API error: ' + res.status);
       const data = await res.json();
-      if (data.error) throw new Error('Gemini: ' + data.error.message);
+      if (!res.ok || data.error) throw new Error('Gemini: ' + (data?.error?.message || res.status));
       return data.candidates[0].content.parts[0].text;
-    } else if (creds.provider === 'groq') {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions',
-        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
-          body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
-      );
-      if (!res.ok) throw new Error('Groq API error: ' + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error('Groq: ' + data.error.message);
-      return data.choices[0].message.content;
-    } else {
-      const res = await fetch('https://api.openai.com/v1/chat/completions',
-        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
-          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
+    }
+
+    // Anthropic — unique request format
+    if (provider === 'anthropic') {
+      const res = await fetch('https://api.anthropic.com/v1/messages',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': creds.key, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: model, max_tokens: 2048, messages: [{ role: 'user', content: prompt }] }) }
       );
       const data = await res.json();
-      if (!res.ok) {
-        const msg = data?.error?.message || 'HTTP ' + res.status;
-        if (res.status === 429) throw new Error('OpenAI 429: ' + msg + ' — Check that your account has billing set up and credits available at platform.openai.com/account/billing');
-        throw new Error('OpenAI error: ' + msg);
-      }
-      if (data.error) throw new Error('OpenAI: ' + data.error.message);
+      if (!res.ok || data.error) throw new Error('Anthropic: ' + (data?.error?.message || res.status));
+      return data.content[0].text;
+    }
+
+    // HuggingFace Inference API
+    if (provider === 'huggingface') {
+      const res = await fetch('https://api-inference.huggingface.co/models/' + model + '/v1/chat/completions',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
+          body: JSON.stringify({ model: model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
+      );
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error('HuggingFace: ' + (data?.error?.message || res.status));
       return data.choices[0].message.content;
     }
+
+    // OpenAI-compatible (Groq, OpenAI, Fireworks, unknown)
+    const endpoints = {
+      groq: 'https://api.groq.com/openai/v1/chat/completions',
+      openai: 'https://api.openai.com/v1/chat/completions',
+      fireworks: 'https://api.fireworks.ai/inference/v1/chat/completions',
+    };
+    const url = endpoints[provider] || endpoints.openai;
+    const res = await fetch(url,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
+        body: JSON.stringify({ model: model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.error?.message || 'HTTP ' + res.status;
+      if (res.status === 429) throw new Error((cfg ? cfg.name : provider) + ' 429: ' + msg + ' \u2014 Check rate limits or billing.');
+      throw new Error((cfg ? cfg.name : provider) + ' error: ' + msg);
+    }
+    return data.choices[0].message.content;
   }
 
   function setLoading(on) {
