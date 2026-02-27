@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>r/LLMPhysics Competition Paper Judge</title>
+    <style>
+        :root {
+            --bg: #f9f9f7; 
+            --fg: #1c1c1a; 
+            --fg-muted: #6b6b64; 
+            --accent: #2d6a4f; 
+            --accent-light: #e8f4ee; 
+            --border: #e2e2de; 
+            --max: 680px; 
+        }
+        body {
+            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.75;
+            max-width: var(--max);
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+        }
+        .SAFE-wordmark {
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-family: 'Segoe UI Bold';
+            margin: 0 1rem 0 0;
+        }
+        .nav-link {
+            color: var(--fg);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .nav-link:hover {
+            color: var(--accent);
+        }
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        .hero-eyebrow {
+            margin-bottom: 1rem;
+            font-size: 14px;
+            color: var(--fg-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+        }
+        .hero-headline {
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        .hero-subline {
+            font-size: 16px;
+            color: var(--fg-muted);
+            margin-bottom: 2rem;
+        }
+        .hero-input {
+            position: relative;
+        }
+        .hero-input-label {
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            transform: translateY(-50%);
+            color: var(--fg-muted);
+            pointer-events: none;
+        }
+        .paper-input {
+            width: 100%;
+            max-width: var(--max);
+            height: 300px;
+            padding: 1rem;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            resize: vertical;
+        }
+        .paper-input-placeholder {
+            font-size: 16px;
+            color: var(--fg-muted);
+        }
+        .rubric {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 100%;
+            max-width: var(--max);
+        }
+        .rubric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .rubric-header-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--fg);
+        }
+        .criterion-card {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 0.6rem;
+        }
+        .criterion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+        }
+        .criterion-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--fg);
+        }
+        .criterion-score {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .criterion-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-bottom: 0.5rem;
+        }
+        .criterion-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+        .criterion-justification {
+            font-size: 13px;
+            color: var(--fg-muted);
+            line-height: 1.5;
+        }
+        .score-button {
+            padding: 1rem;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+            max-width: var(--max);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--fg);
+            background-color: var(--accent);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .score-button:hover {
+            background-color: var(--accent-light);
+        }
+        .score-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loading-state {
+            font-size: 16px;
+            color: var(--fg-muted);
+            margin-top: 1rem;
+        }
+        .results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .results-header {
+            font-size: 20px;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        .results-score {
+            font-size: 24px;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .results-narrative {
+            font-size: 16px;
+            color: var(--fg);
+            margin-bottom: 2rem;
+        }
+        .copy-results-button {
+            padding: 1rem;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+            max-width: var(--max);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--fg);
+            background-color: var(--accent);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .copy-results-button:hover {
+            background-color: var(--accent-light);
+        }
+        .copy-results-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .footer {
+            font-size: 14px;
+            color: var(--fg-muted);
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .footer-link {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .footer-link:hover {
+            color: var(--accent-light);
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-left">
+            <a href="../index.html" class="SAFE-wordmark nav-link">SAFE</a>
+        </div>
+        <div class="nav-right">
+            <a href="#" class="nav-link">r/LLMPhysics</a>
+        </div>
+    </nav>
+    <section class="hero">
+        <div class="hero-eyebrow">
+            COMPETITION JUDGE
+        </div>
+        <h1 class="hero-headline">
+            r/LLMPhysics Paper Evaluation
+        </h1>
+        <p class="hero-subline">
+            <span style="font-size: 16px;">Paste a paper below.</span> 
+            <span class="hero-input-label">The judge scores it against the official competition rubric.</span>
+        </p>
+        <div class="hero-input">
+            <label for="paper-input" class="hero-input-label">Paste the full paper text here...</label>
+            <textarea id="paper-input" class="paper-input" placeholder="Paste the full paper text here..."></textarea>
+            <div class="char-count">
+                <span id="char-count">0</span>
+                <span>/100</span>
+            </div>
+            <div class="paper-input-url">
+                <label for="paper-input-url">Coming soon:</label>
+                <input type="url" id="paper-input-url" class="paper-input" disabled>
+            </div>
+            <button class="score-button" id="score-button" disabled="true">Score This Paper</button>
+            <div class="loading-state hidden" id="loading-state">Judging...</div>
+            <div id="results">
+                <div class="results-header">EVALUATION RESULTS</div>
+                <div class="results-score accent" id="results-score"></div>
+                <div class="results-narrative" id="results-narrative"></div>
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+        SAFE · Session-Authorized, Fully Explicit &nbsp;|&nbsp; 
+        <a href="#" class="footer-link">About</a
+  </script>
+</body>
+</html>
