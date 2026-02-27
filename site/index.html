@@ -54,12 +54,15 @@
     textarea#paperInput:focus { border-color: var(--accent); }
     .char-count { font-size: 12px; color: var(--fg-muted); text-align: right; margin-top: 0.2rem; }
     .url-row { margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .url-row label { font-size: 13px; color: var(--fg-muted); white-space: nowrap; }
-    .url-row input { font-size: 13px; flex: 1; min-width: 200px; border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.6rem; background: #fff; color: var(--fg); outline: none; }
-    .url-row input:focus { border-color: var(--accent); }
+    .url-row > label { font-size: 13px; color: var(--fg-muted); white-space: nowrap; }
+    .url-row input[type="text"] { font-size: 13px; flex: 1; min-width: 160px; border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.6rem; background: #fff; color: var(--fg); outline: none; }
+    .url-row input[type="text"]:focus { border-color: var(--accent); }
     .url-fetch-btn { font-size: 13px; padding: 0.35rem 0.8rem; border: none; border-radius: 4px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap; }
     .url-fetch-btn:hover:not(:disabled) { opacity: 0.88; }
     .url-fetch-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .url-browse-btn { font-size: 13px; padding: 0.35rem 0.8rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--fg-muted); cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .url-browse-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .url-row .divider { font-size: 12px; color: var(--fg-muted); }
     .url-status { font-size: 12px; font-style: italic; width: 100%; padding-left: 0; }
     .rubric-toggle { display: flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--fg-muted); cursor: pointer; user-select: none; margin: 1rem 0 0; background: none; border: none; padding: 0; }
     .rubric-toggle:hover { color: var(--accent); }
@@ -166,9 +169,12 @@
     <textarea id="paperInput" placeholder="Paste the full paper text here..."></textarea>
     <div class="char-count"><span id="charCount">0</span> characters</div>
     <div class="url-row">
-      <label for="urlInput">Or fetch from URL:</label>
+      <label>Or load from:</label>
       <input type="text" id="urlInput" placeholder="https://arxiv.org/abs/..." oninput="onUrlInput()">
       <button class="url-fetch-btn" id="urlFetchBtn" onclick="fetchFromUrl()" disabled>Fetch</button>
+      <span class="divider">or</span>
+      <label class="url-browse-btn" for="fileInput">Browse&hellip;</label>
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md" style="display:none" onchange="loadFile(this)">
       <span class="url-status" id="urlStatus"></span>
     </div>
   </div>
@@ -219,6 +225,12 @@
     </span>
   </footer>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <script>
   const STORAGE_KEY = 'safe_account';
   const RUBRIC = [
@@ -385,8 +397,12 @@ ${paperText}
         { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
           body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
       );
-      if (!res.ok) throw new Error('OpenAI API error: ' + res.status);
       const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error?.message || 'HTTP ' + res.status;
+        if (res.status === 429) throw new Error('OpenAI 429: ' + msg + ' — Check that your account has billing set up and credits available at platform.openai.com/account/billing');
+        throw new Error('OpenAI error: ' + msg);
+      }
       if (data.error) throw new Error('OpenAI: ' + data.error.message);
       return data.choices[0].message.content;
     }
@@ -491,6 +507,50 @@ ${paperText}
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  function populatePaper(text, label) {
+    const status = document.getElementById('urlStatus');
+    document.getElementById('paperInput').value = text;
+    document.getElementById('charCount').textContent = text.length.toLocaleString();
+    document.getElementById('scoreBtn').disabled = text.length < 100;
+    status.textContent = '\u2713 Loaded ' + (label || '') + ' \u2014 ' + text.length.toLocaleString() + ' chars';
+    status.style.color = 'var(--accent)';
+  }
+
+  async function extractPdfText(file) {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded. Try refreshing the page.');
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(item => item.str).join(' '));
+    }
+    return pages.join('\n\n');
+  }
+
+  async function loadFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const status = document.getElementById('urlStatus');
+    status.textContent = 'Reading ' + file.name + '\u2026';
+    status.style.color = 'var(--fg-muted)';
+    try {
+      let text;
+      if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
+        text = await extractPdfText(file);
+      } else {
+        text = await file.text();
+      }
+      if (text.trim().length < 50) throw new Error('File appears empty or could not be read.');
+      populatePaper(text, file.name);
+    } catch(e) {
+      status.textContent = e.message;
+      status.style.color = '#b33030';
+    }
+    input.value = '';
+  }
+
   function onUrlInput() {
     const url = document.getElementById('urlInput').value.trim();
     document.getElementById('urlFetchBtn').disabled = !url.startsWith('http');
@@ -511,12 +571,8 @@ ${paperText}
       const res = await fetch('https://r.jina.ai/' + url, { headers: { 'Accept': 'text/plain' } });
       if (!res.ok) throw new Error('Could not fetch page (HTTP ' + res.status + ')');
       const text = await res.text();
-      if (text.length < 200) throw new Error('Page returned too little content \u2014 try pasting the text directly.');
-      document.getElementById('paperInput').value = text;
-      document.getElementById('charCount').textContent = text.length.toLocaleString();
-      document.getElementById('scoreBtn').disabled = text.length < 100;
-      status.textContent = '\u2713 Loaded ' + text.length.toLocaleString() + ' chars';
-      status.style.color = 'var(--accent)';
+      if (text.length < 200) throw new Error('Page returned too little content \u2014 try using Browse to upload the PDF directly.');
+      populatePaper(text, url.split('/').pop() || url);
     } catch(e) {
       status.textContent = e.message;
       status.style.color = '#b33030';
