@@ -53,10 +53,14 @@
     textarea#paperInput { width: 100%; min-height: 300px; resize: vertical; font-size: 14px; font-family: inherit; line-height: 1.6; border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem 1rem; background: #fff; color: var(--fg); outline: none; }
     textarea#paperInput:focus { border-color: var(--accent); }
     .char-count { font-size: 12px; color: var(--fg-muted); text-align: right; margin-top: 0.2rem; }
-    .url-row { margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
-    .url-row label { font-size: 13px; color: var(--fg-muted); }
-    .url-row input { font-size: 13px; flex: 1; border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.6rem; background: #f5f5f3; color: var(--fg-muted); }
-    .url-row .coming-soon { font-size: 11px; color: var(--fg-muted); font-style: italic; }
+    .url-row { margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .url-row label { font-size: 13px; color: var(--fg-muted); white-space: nowrap; }
+    .url-row input { font-size: 13px; flex: 1; min-width: 200px; border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.6rem; background: #fff; color: var(--fg); outline: none; }
+    .url-row input:focus { border-color: var(--accent); }
+    .url-fetch-btn { font-size: 13px; padding: 0.35rem 0.8rem; border: none; border-radius: 4px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .url-fetch-btn:hover:not(:disabled) { opacity: 0.88; }
+    .url-fetch-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .url-status { font-size: 12px; font-style: italic; width: 100%; padding-left: 0; }
     .rubric-toggle { display: flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--fg-muted); cursor: pointer; user-select: none; margin: 1rem 0 0; background: none; border: none; padding: 0; }
     .rubric-toggle:hover { color: var(--accent); }
     #rubricBody { display: none; margin-top: 0.75rem; }
@@ -162,9 +166,10 @@
     <textarea id="paperInput" placeholder="Paste the full paper text here..."></textarea>
     <div class="char-count"><span id="charCount">0</span> characters</div>
     <div class="url-row">
-      <label for="urlInput">Or paste a URL:</label>
-      <input type="text" id="urlInput" placeholder="https://arxiv.org/abs/..." disabled>
-      <span class="coming-soon">coming soon</span>
+      <label for="urlInput">Or fetch from URL:</label>
+      <input type="text" id="urlInput" placeholder="https://arxiv.org/abs/..." oninput="onUrlInput()">
+      <button class="url-fetch-btn" id="urlFetchBtn" onclick="fetchFromUrl()" disabled>Fetch</button>
+      <span class="url-status" id="urlStatus"></span>
     </div>
   </div>
   <button class="rubric-toggle" onclick="toggleRubric()" id="rubricToggleBtn">
@@ -484,6 +489,41 @@ ${paperText}
     const section = document.getElementById('resultsSection');
     section.classList.add('visible');
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function onUrlInput() {
+    const url = document.getElementById('urlInput').value.trim();
+    document.getElementById('urlFetchBtn').disabled = !url.startsWith('http');
+    document.getElementById('urlStatus').textContent = '';
+  }
+
+  async function fetchFromUrl() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    const btn = document.getElementById('urlFetchBtn');
+    const status = document.getElementById('urlStatus');
+    btn.disabled = true;
+    btn.textContent = 'Fetching\u2026';
+    status.textContent = '';
+    status.style.color = 'var(--fg-muted)';
+    try {
+      // JINA reader: converts any public URL to clean plain text, no CORS issues
+      const res = await fetch('https://r.jina.ai/' + url, { headers: { 'Accept': 'text/plain' } });
+      if (!res.ok) throw new Error('Could not fetch page (HTTP ' + res.status + ')');
+      const text = await res.text();
+      if (text.length < 200) throw new Error('Page returned too little content \u2014 try pasting the text directly.');
+      document.getElementById('paperInput').value = text;
+      document.getElementById('charCount').textContent = text.length.toLocaleString();
+      document.getElementById('scoreBtn').disabled = text.length < 100;
+      status.textContent = '\u2713 Loaded ' + text.length.toLocaleString() + ' chars';
+      status.style.color = 'var(--accent)';
+    } catch(e) {
+      status.textContent = e.message;
+      status.style.color = '#b33030';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Fetch';
+    }
   }
 
   function copyResults() {
