@@ -156,6 +156,13 @@
     .cit-note { font-size: 12px; color: var(--fg-muted); }
     .cit-flags { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.25rem; }
     .cit-flag { font-size: 10px; background: #fff4e6; color: #a05000; border: 1px solid #f6a623; border-radius: 3px; padding: 0.1rem 0.35rem; }
+    .reasoning-btn { font-size: 13px; padding: 0.5rem 1.25rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--fg-muted); cursor: pointer; margin-left: 0.5rem; }
+    .reasoning-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #reasoningPanel { display: none; margin-top: 1.5rem; }
+    #reasoningPanel.open { display: block; }
+    .reasoning-header { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .reasoning-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .reasoning-body { font-size: 14px; line-height: 1.8; color: var(--fg); background: #fafaf8; border: 1px solid var(--border); border-left: 3px solid var(--fg-muted); border-radius: 4px; padding: 1.25rem 1.5rem; white-space: pre-wrap; font-family: 'Georgia', serif; }
   </style>
 </head>
 <body>
@@ -242,6 +249,11 @@
     </div>
     <div class="verdict-box" id="verdictBox"></div>
     <button id="copyBtn" onclick="copyResults()">Copy Results</button>
+    <button class="reasoning-btn" id="reasoningBtn" onclick="toggleReasoning()" style="display:none;">Show AI Reasoning</button>
+    <div id="reasoningPanel">
+      <div class="reasoning-header">AI Evaluation Thought Process</div>
+      <div class="reasoning-body" id="reasoningText"></div>
+    </div>
   </div>
   <footer>
     <span>SAFE &middot; Session-Authorized, Fully Explicit</span>
@@ -422,7 +434,8 @@ Required JSON format:
   "narrative": "<2-3 sentences: what the paper argues and what it attempts to contribute — neutral and accurate>",
   "strengths": ["<strength 1>", "<strength 2>"],
   "top_improvements": ["<most impactful improvement>", "<second>", "<third>"],
-  "verdict": "Ready to submit" | "Needs revision" | "Significant rework needed"
+  "verdict": "Ready to submit" | "Needs revision" | "Significant rework needed",
+  "reasoning": "<Your full evaluation thought process: how you approached the paper, what you read first, where you found (or couldn't find) the hypothesis and novelty claim, what impressed or concerned you as you read, what changed your assessment, where the paper was ambiguous, and what ultimately drove each score. Write as if explaining your process to the author. 250-400 words. Be honest about uncertainty.>"
 }
 
 Paper to evaluate:
@@ -561,6 +574,19 @@ ${paperText}
     vb.className = 'verdict-box';
     if (result.verdict === 'Needs revision') vb.classList.add('warn');
     if (result.verdict === 'Significant rework needed') vb.classList.add('bad');
+    // Reasoning panel
+    const reasoningBtn = document.getElementById('reasoningBtn');
+    const reasoningText = document.getElementById('reasoningText');
+    const reasoningPanel = document.getElementById('reasoningPanel');
+    if (result.reasoning) {
+      reasoningText.textContent = result.reasoning;
+      reasoningBtn.style.display = 'inline-block';
+      reasoningPanel.classList.remove('open');
+      reasoningBtn.textContent = 'Show AI Reasoning';
+    } else {
+      reasoningBtn.style.display = 'none';
+    }
+
     renderCitations(result);
     const section = document.getElementById('resultsSection');
     section.classList.add('visible');
@@ -614,6 +640,13 @@ ${paperText}
 
     const verdictBox = document.getElementById('verdictBox');
     verdictBox.insertAdjacentHTML('afterend', html);
+  }
+
+  function toggleReasoning() {
+    const panel = document.getElementById('reasoningPanel');
+    const btn = document.getElementById('reasoningBtn');
+    panel.classList.toggle('open');
+    btn.textContent = panel.classList.contains('open') ? 'Hide AI Reasoning' : 'Show AI Reasoning';
   }
 
   function populatePaper(text, label) {
