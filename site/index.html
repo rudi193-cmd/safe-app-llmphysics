@@ -277,6 +277,7 @@
     openai:    { name: 'OpenAI',           prefix: 'sk-',     model: 'gpt-4o-mini' },
     fireworks: { name: 'Fireworks AI',     prefix: 'fw_',     model: 'accounts/fireworks/models/llama-v3p3-70b-instruct' },
     huggingface: { name: 'HuggingFace',   prefix: 'hf_',     model: 'meta-llama/Llama-3.1-70B-Instruct' },
+    xai:         { name: 'Grok (xAI)',    prefix: 'xai-',    model: 'grok-4-0709' },
   };
 
   function detectProvider(key) {
@@ -538,6 +539,7 @@ ${paperText}
       groq: 'https://api.groq.com/openai/v1/chat/completions',
       openai: 'https://api.openai.com/v1/chat/completions',
       fireworks: 'https://api.fireworks.ai/inference/v1/chat/completions',
+      xai: 'https://api.x.ai/v1/chat/completions',
     };
     const url = endpoints[provider] || endpoints.openai;
     const res = await fetch(url,
