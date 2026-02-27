@@ -129,6 +129,33 @@
     .elem-missing .elem-status { color: #dc2626; }
     .elem-unclear .elem-status { color: #a0720a; }
     @media (max-width: 480px) { .mandatory-grid { grid-template-columns: 1fr; } }
+    .citations-section { margin-top: 1.5rem; }
+    .citation-summary-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0 1rem; }
+    .cit-badge { font-size: 12px; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 20px; white-space: nowrap; }
+    .cit-badge.peer { background: var(--accent-light); color: var(--accent); }
+    .cit-badge.preprint { background: #fef9e7; color: #a0720a; }
+    .cit-badge.non-academic { background: #fef2f2; color: #dc2626; }
+    .cit-badge.hallucinated { background: #dc2626; color: #fff; }
+    .cit-badge.unclear { background: #f5f5f3; color: var(--fg-muted); }
+    .cluster-warning { background: #fff4e6; border: 1px solid #f6a623; border-radius: 4px; padding: 0.5rem 0.75rem; font-size: 13px; color: #a05000; margin-bottom: 0.75rem; }
+    .citation-list { list-style: none; margin: 0; padding: 0; }
+    .citation-item { border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem; display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: start; }
+    .citation-item.cit-peer { border-left: 3px solid var(--accent); }
+    .citation-item.cit-preprint { border-left: 3px solid #f6a623; }
+    .citation-item.cit-non-academic { border-left: 3px solid #dc2626; }
+    .citation-item.cit-hallucinated { border-left: 3px solid #7f0000; background: #fff5f5; }
+    .citation-item.cit-unclear { border-left: 3px solid var(--border); }
+    .cit-type-pill { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 3px; white-space: nowrap; margin-top: 2px; }
+    .cit-peer .cit-type-pill { background: var(--accent-light); color: var(--accent); }
+    .cit-preprint .cit-type-pill { background: #fef9e7; color: #a0720a; }
+    .cit-non-academic .cit-type-pill { background: #fef2f2; color: #dc2626; }
+    .cit-hallucinated .cit-type-pill { background: #dc2626; color: #fff; }
+    .cit-unclear .cit-type-pill { background: #f5f5f3; color: var(--fg-muted); }
+    .cit-body { min-width: 0; }
+    .cit-ref { font-size: 13px; font-weight: 600; color: var(--fg); margin-bottom: 0.15rem; }
+    .cit-note { font-size: 12px; color: var(--fg-muted); }
+    .cit-flags { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.25rem; }
+    .cit-flag { font-size: 10px; background: #fff4e6; color: #a05000; border: 1px solid #f6a623; border-radius: 3px; padding: 0.1rem 0.35rem; }
   </style>
 </head>
 <body>
@@ -316,7 +343,21 @@ RUBRIC (self-audit total: 85 points — Defense requires human interaction and i
 - scientific_humility: /15 — Failure conditions stated; proposal is falsifiable; uncertainty acknowledged honestly
 - engagement: /20 — True engagement with literature beyond binary true/false; reasons through existing work
 - rigor: /10 — First principles derivations; units preserved; parameters explained and justified
-- citations: /10 — Relevant, verifiable, post-2015 preferred; flag any that appear hallucinated
+- citations: /10 — Relevant, verifiable, post-2015 preferred; flag hallucinated or non-peer-reviewed sources
+
+CITATION SOURCE QUALITY — populate citations_analysis for every reference found in the paper:
+For each citation, assess source type:
+  - "peer_reviewed": published in a recognized journal or peer-reviewed conference proceedings
+  - "preprint": arXiv, bioRxiv, or similar preprint server without confirmed peer review
+  - "non_academic": blog, Substack, YouTube, Reddit, personal website, forum post, self-published
+  - "hallucinated": title/authors/year combination does not plausibly exist or appears fabricated
+  - "unclear": cannot determine from available information
+
+Also flag any of these patterns if present:
+  - "self_citation": author appears to be citing their own prior work heavily (>30% of references)
+  - "citation_cluster": citations form a tight self-referential cluster of the same small group of authors
+  - "predatory_journal": published in a known predatory or vanity journal
+  - "no_doi_unverifiable": no DOI, no arXiv ID, no clear way to verify the source exists
 
 MANDATORY ELEMENTS — check each (do not adjust scores, just note status):
 1. LLM Disclosure Statement (model used, how used, human oversight process — must be specific)
@@ -346,7 +387,7 @@ Required JSON format:
     "scientific_humility": "<2-3 sentences>",
     "engagement": "<2-3 sentences>",
     "rigor": "<2-3 sentences>",
-    "citations": "<2-3 sentences>"
+    "citations": "<2-3 sentences — note source quality issues directly>"
   },
   "mandatory_elements": {
     "llm_disclosure": "present | missing | unclear",
@@ -359,6 +400,24 @@ Required JSON format:
     "parameter_accounting": true | false,
     "failure_conditions": true | false,
     "reproducibility": true | false | "n/a"
+  },
+  "citations_analysis": [
+    {
+      "ref": "<short reference — author(s) year or title fragment>",
+      "source_type": "peer_reviewed | preprint | non_academic | hallucinated | unclear",
+      "flags": ["self_citation", "citation_cluster", "predatory_journal", "no_doi_unverifiable"],
+      "note": "<one sentence — e.g. 'Published in Nature 2021' or 'Links to author Substack' or 'Title does not appear in any database'>"
+    }
+  ],
+  "citation_summary": {
+    "total": <int>,
+    "peer_reviewed": <int>,
+    "preprint": <int>,
+    "non_academic": <int>,
+    "hallucinated": <int>,
+    "unclear": <int>,
+    "cluster_warning": true | false,
+    "cluster_note": "<null or one sentence describing the cluster pattern if detected>"
   },
   "narrative": "<2-3 sentences: what the paper argues and what it attempts to contribute — neutral and accurate>",
   "strengths": ["<strength 1>", "<strength 2>"],
@@ -502,9 +561,59 @@ ${paperText}
     vb.className = 'verdict-box';
     if (result.verdict === 'Needs revision') vb.classList.add('warn');
     if (result.verdict === 'Significant rework needed') vb.classList.add('bad');
+    renderCitations(result);
     const section = document.getElementById('resultsSection');
     section.classList.add('visible');
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderCitations(result) {
+    const existing = document.getElementById('citationsPanel');
+    if (existing) existing.remove();
+    const analysis = result.citations_analysis;
+    const summary = result.citation_summary;
+    if (!analysis || !analysis.length) return;
+
+    const typeLabel = { peer_reviewed: 'Peer-Reviewed', preprint: 'Preprint', non_academic: 'Non-Academic', hallucinated: 'Hallucinated', unclear: 'Unclear' };
+    const typeClass = { peer_reviewed: 'peer', preprint: 'preprint', non_academic: 'non-academic', hallucinated: 'hallucinated', unclear: 'unclear' };
+    const flagLabel = { self_citation: 'self-citation', citation_cluster: 'citation cluster', predatory_journal: 'predatory journal', no_doi_unverifiable: 'unverifiable' };
+
+    let html = '<div class="citations-section" id="citationsPanel">'
+      + '<div class="section-eyebrow">CITATION SOURCE AUDIT</div>';
+
+    if (summary) {
+      html += '<div class="citation-summary-row">';
+      const counts = [
+        ['peer_reviewed', 'peer'], ['preprint', 'preprint'],
+        ['non_academic', 'non-academic'], ['hallucinated', 'hallucinated'], ['unclear', 'unclear']
+      ];
+      counts.forEach(([key, cls]) => {
+        if (summary[key] > 0) {
+          html += '<span class="cit-badge ' + cls + '">' + summary[key] + ' ' + typeLabel[key] + '</span>';
+        }
+      });
+      html += '</div>';
+      if (summary.cluster_warning && summary.cluster_note) {
+        html += '<div class="cluster-warning">\u26a0\ufe0f Citation cluster detected: ' + summary.cluster_note + '</div>';
+      }
+    }
+
+    html += '<ul class="citation-list">';
+    analysis.forEach(cit => {
+      const cls = typeClass[cit.source_type] || 'unclear';
+      const flags = (cit.flags || []).map(f => '<span class="cit-flag">' + (flagLabel[f] || f) + '</span>').join('');
+      html += '<li class="citation-item cit-' + cls + '">'
+        + '<span class="cit-type-pill">' + (typeLabel[cit.source_type] || cit.source_type) + '</span>'
+        + '<div class="cit-body">'
+        + '<div class="cit-ref">' + (cit.ref || '') + '</div>'
+        + (cit.note ? '<div class="cit-note">' + cit.note + '</div>' : '')
+        + (flags ? '<div class="cit-flags">' + flags + '</div>' : '')
+        + '</div></li>';
+    });
+    html += '</ul></div>';
+
+    const verdictBox = document.getElementById('verdictBox');
+    verdictBox.insertAdjacentHTML('afterend', html);
   }
 
   function populatePaper(text, label) {
