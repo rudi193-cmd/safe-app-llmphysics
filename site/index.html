@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>r/LLMPhysics Competition Paper Judge</title>
+  <title>JAC Self-Audit Judge — r/LLMPhysics</title>
   <style>
     :root {
       --bg: #f9f9f7;
@@ -100,6 +100,28 @@
     footer { margin-top: 3rem; padding: 1.5rem 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-muted); flex-wrap: wrap; gap: 0.5rem; }
     footer a { color: var(--fg-muted); text-decoration: none; }
     footer a:hover { color: var(--accent); }
+    .hero-sub { font-size: 15px; color: var(--fg-muted); margin-bottom: 0.4rem; }
+    .rubric-defense { opacity: 0.6; font-style: italic; }
+    .rubric-total td { font-weight: 600; border-top: 2px solid var(--border); }
+    .badge-human {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; background: #fef9e7; color: #a0720a;
+      padding: 0.15rem 0.4rem; border-radius: 3px; margin-left: 0.4rem;
+      font-style: normal; vertical-align: middle;
+    }
+    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; }
+    .section-sub { font-size: 12px; color: var(--fg-muted); margin-bottom: 0.5rem; }
+    .mandatory-section { margin-top: 1.5rem; }
+    .mandatory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.75rem; }
+    .mandatory-item { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; padding: 0.5rem 0.75rem; border-radius: 4px; border: 1px solid var(--border); }
+    .elem-present { background: var(--accent-light); }
+    .elem-missing { background: #fef2f2; border-color: #fca5a5; }
+    .elem-unclear { background: #fef9e7; border-color: #fcd34d; }
+    .elem-status { font-weight: 700; font-size: 14px; }
+    .elem-present .elem-status { color: var(--accent); }
+    .elem-missing .elem-status { color: #dc2626; }
+    .elem-unclear .elem-status { color: #a0720a; }
+    @media (max-width: 480px) { .mandatory-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -109,9 +131,9 @@
     <a href="https://www.reddit.com/r/LLMPhysics/" target="_blank" class="nav-link">r/LLMPhysics</a>
   </nav>
   <div class="hero">
-    <div class="eyebrow">Competition Judge</div>
-    <h1>r/LLMPhysics Paper Evaluation</h1>
-    <p class="subline">Paste a paper below. The judge scores it against the official competition rubric &mdash; concept, execution, citations, assumptions, research question.</p>
+    <div class="eyebrow">JAC Self-Audit Judge</div>
+    <h1>JAC Self-Audit Judge</h1>
+    <p class="hero-sub">Paste your draft below for a pre-submission audit against the official Journal Ambitions Contest rubric. Scores out of 85 — Defense (15 pts) is reserved for human judges.</p>
     <p class="note">Scoring uses your AI provider from SAFE account, or enter a key below.</p>
   </div>
   <div class="api-section" id="apiSection">
@@ -151,14 +173,18 @@
   </button>
   <div id="rubricBody">
     <table class="rubric-table">
-      <thead><tr><th>Criterion</th><th>Points</th><th>Description</th></tr></thead>
+      <thead>
+        <tr><th>Criterion</th><th>Points</th><th>What judges look for</th></tr>
+      </thead>
       <tbody>
-        <tr><td>Research Question</td><td>/20</td><td>Clear, legitimate scientific question? Relevant to modern physics?</td></tr>
-        <tr><td>Citations</td><td>/15</td><td>Modern, relevant sources cited? Not exclusively fringe/deprecated?</td></tr>
-        <tr><td>Minimal Assumptions</td><td>/20</td><td>Derives from fewest necessary assumptions? No overreach?</td></tr>
-        <tr><td>Scientific Concept</td><td>/25</td><td>Coherent, testable/falsifiable central idea? Non-trivial?</td></tr>
-        <tr><td>Execution</td><td>/20</td><td>Clear argument, internal consistency, presentation quality?</td></tr>
-        <tr><td><strong>Total</strong></td><td><strong>/100</strong></td><td></td></tr>
+        <tr><td>Hypothesis</td><td>15</td><td>Intent and problem clearly stated in abstract or introduction</td></tr>
+        <tr><td>Novelty</td><td>15</td><td>Genuinely novel approach &mdash; new derivation path, synthesis, or unexplored angle</td></tr>
+        <tr><td>Scientific Humility</td><td>15</td><td>Failure conditions stated; proposal is falsifiable; uncertainty acknowledged</td></tr>
+        <tr><td>Engagement</td><td>20</td><td>True engagement with literature &mdash; reasons through it, not just binary agreement/dismissal</td></tr>
+        <tr><td>Rigor</td><td>10</td><td>First principles derivations; units preserved; parameters justified</td></tr>
+        <tr><td>Citations</td><td>10</td><td>Relevant, verifiable, post-2015 preferred; no hallucinated sources</td></tr>
+        <tr class="rubric-defense"><td>Defense <span class="badge-human">human judges only</span></td><td>15</td><td>Response to critique demonstrates understanding. Skipped if no valid critiques raised.</td></tr>
+        <tr class="rubric-total"><td><strong>Self-audit total</strong></td><td><strong>85</strong></td><td>Defense scored separately by human judges</td></tr>
       </tbody>
     </table>
   </div>
@@ -169,12 +195,12 @@
   <div id="resultsSection">
     <div class="results-eyebrow eyebrow">Evaluation Results</div>
     <div class="total-score" id="totalScore">&#8212;</div>
-    <div class="total-label">out of 100</div>
+    <div class="total-label">out of 85 (self-audit)</div>
     <div class="narrative" id="narrativeText"></div>
     <div id="criterionCards"></div>
     <div class="strengths-concerns">
       <div class="sc-block strengths"><h4>Strengths</h4><ul id="strengthsList"></ul></div>
-      <div class="sc-block concerns"><h4>Concerns</h4><ul id="concernsList"></ul></div>
+      <div class="sc-block concerns"><h4>Top Improvements</h4><ul id="concernsList"></ul></div>
     </div>
     <div class="verdict-box" id="verdictBox"></div>
     <button id="copyBtn" onclick="copyResults()">Copy Results</button>
@@ -191,12 +217,22 @@
 <script>
   const STORAGE_KEY = 'safe_account';
   const RUBRIC = [
-    { name: 'Research Question', max: 20, key: 'research_question', desc: 'Clear, legitimate scientific question; relevant to modern physics' },
-    { name: 'Citations', max: 15, key: 'citations', desc: 'Modern, relevant sources; not exclusively fringe/deprecated' },
-    { name: 'Minimal Assumptions', max: 20, key: 'minimal_assumptions', desc: 'Derives from fewest necessary assumptions; no overreach' },
-    { name: 'Scientific Concept', max: 25, key: 'scientific_concept', desc: 'Coherent, testable/falsifiable central idea; non-trivial' },
-    { name: 'Execution', max: 20, key: 'execution', desc: 'Clear argument structure, internal consistency, presentation quality' },
+    { name: 'Hypothesis', max: 15, key: 'hypothesis',
+      desc: 'Author clearly states the intent of the paper and the problem it attempts to solve' },
+    { name: 'Novelty', max: 15, key: 'novelty',
+      desc: 'Author develops a genuinely novel approach to the problem and explores it in new ways' },
+    { name: 'Scientific Humility', max: 15, key: 'scientific_humility',
+      desc: 'Author presents failure conditions and falsifiability honestly' },
+    { name: 'Engagement', max: 20, key: 'engagement',
+      desc: 'Author demonstrates true engagement with existing material beyond suggesting binary true and false statements' },
+    { name: 'Rigor', max: 10, key: 'rigor',
+      desc: 'Values are derived from first principles, units are preserved across equations' },
+    { name: 'Citations', max: 10, key: 'citations',
+      desc: 'Paper cites references that are both relevant to the material and up to date' },
   ];
+  // Defense (15pts) is scored by human judges only — requires author interaction
+  // Self-audit total: 85 points
+  const SELF_AUDIT_MAX = 85;
   let lastResult = null;
 
   (function init() {
@@ -253,23 +289,70 @@
   }
 
   function buildJudgePrompt(paperText) {
-    return 'You are an impartial judge for the r/LLMPhysics community paper competition.\n'
-      + 'Score the following paper against this rubric. Return ONLY valid JSON, no markdown, no explanation.\n\n'
-      + 'Rubric:\n'
-      + '- research_question: /20 - Clear, legitimate scientific question; relevant to modern physics\n'
-      + '- citations: /15 - Modern, relevant sources; not exclusively fringe/deprecated\n'
-      + '- minimal_assumptions: /20 - Derives from fewest necessary assumptions; no overreach\n'
-      + '- scientific_concept: /25 - Coherent, testable/falsifiable central idea; non-trivial\n'
-      + '- execution: /20 - Clear argument, internal consistency, presentation\n\n'
-      + 'Return ONLY this JSON structure:\n'
-      + '{"scores":{"research_question":0,"citations":0,"minimal_assumptions":0,"scientific_concept":0,"execution":0},'
-      + '"justifications":{"research_question":"","citations":"","minimal_assumptions":"","scientific_concept":"","execution":""},'
-      + '"narrative":"2-3 sentence summary",'
-      + '"strengths":["strength1","strength2","strength3"],'
-      + '"concerns":["concern1","concern2","concern3"],'
-      + '"verdict":"Recommended for submission"}\n\n'
-      + 'Valid verdict values: "Recommended for submission" | "Needs revision" | "Significant rework needed"\n\n'
-      + 'Paper to evaluate:\n---\n' + paperText + '\n---';
+    return `You are the self-audit judge for the r/LLMPhysics Journal Ambitions Contest (Constitution v0.3).
+
+Score the following manuscript against the official rubric. Return ONLY valid JSON.
+
+RUBRIC (self-audit total: 85 points — Defense requires human interaction and is excluded):
+- hypothesis: /15 — Intent and problem clearly stated; vague or absent = low score
+- novelty: /15 — Genuinely novel approach; repackaging known results without new angles scores low
+- scientific_humility: /15 — Failure conditions stated; proposal is falsifiable; uncertainty acknowledged honestly
+- engagement: /20 — True engagement with literature beyond binary true/false; reasons through existing work
+- rigor: /10 — First principles derivations; units preserved; parameters explained and justified
+- citations: /10 — Relevant, verifiable, post-2015 preferred; flag any that appear hallucinated
+
+MANDATORY ELEMENTS — check each (do not adjust scores, just note status):
+1. LLM Disclosure Statement (model used, how used, human oversight process — must be specific)
+2. At least 3 modern, verifiable citations
+3. Genuine question or problem articulated in abstract/introduction
+4. Originality and novelty statement (what's new, how it differs from prior work, acknowledged limitations)
+
+SOFT CONSTRAINTS — note if present or absent:
+- Claim type labeling (derived / hypothetical / speculative / literature-based)
+- Parameter accounting (parameters justified physically/mathematically)
+- Failure conditions and falsifiability statement
+- Reproducibility notes (if computational)
+
+Required JSON format:
+{
+  "scores": {
+    "hypothesis": <int 0-15>,
+    "novelty": <int 0-15>,
+    "scientific_humility": <int 0-15>,
+    "engagement": <int 0-20>,
+    "rigor": <int 0-10>,
+    "citations": <int 0-10>
+  },
+  "justifications": {
+    "hypothesis": "<2-3 sentences — specific, quote/paraphrase the paper>",
+    "novelty": "<2-3 sentences>",
+    "scientific_humility": "<2-3 sentences>",
+    "engagement": "<2-3 sentences>",
+    "rigor": "<2-3 sentences>",
+    "citations": "<2-3 sentences>"
+  },
+  "mandatory_elements": {
+    "llm_disclosure": "present | missing | unclear",
+    "citations_count": "present | missing | unclear",
+    "research_question": "present | missing | unclear",
+    "novelty_statement": "present | missing | unclear"
+  },
+  "soft_constraints": {
+    "claim_labeling": true | false,
+    "parameter_accounting": true | false,
+    "failure_conditions": true | false,
+    "reproducibility": true | false | "n/a"
+  },
+  "narrative": "<2-3 sentences: what the paper argues and what it attempts to contribute — neutral and accurate>",
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "top_improvements": ["<most impactful improvement>", "<second>", "<third>"],
+  "verdict": "Ready to submit" | "Needs revision" | "Significant rework needed"
+}
+
+Paper to evaluate:
+---
+${paperText}
+---`;
   }
 
   async function callLLM(prompt, creds) {
@@ -363,11 +446,36 @@
     requestAnimationFrame(() => {
       cards.querySelectorAll('.criterion-bar-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; });
     });
+    // Mandatory elements section
+    if (result.mandatory_elements) {
+      const labels = {
+        llm_disclosure: 'LLM Disclosure Statement',
+        citations_count: '3+ Modern Citations',
+        research_question: 'Research Question Stated',
+        novelty_statement: 'Originality & Novelty Statement'
+      };
+      const mandatoryHtml = '<div class="mandatory-section">'
+        + '<div class="section-eyebrow">MANDATORY ELEMENTS</div>'
+        + '<div class="section-sub">Required for contest eligibility</div>'
+        + '<div class="mandatory-grid">'
+        + Object.entries(result.mandatory_elements).map(function([key, val]) {
+            const cls = val === 'present' ? 'elem-present' : val === 'missing' ? 'elem-missing' : 'elem-unclear';
+            const icon = val === 'present' ? '\u2713' : val === 'missing' ? '\u2717' : '?';
+            return '<div class="mandatory-item ' + cls + '">'
+              + '<span class="elem-status">' + icon + '</span>'
+              + '<span>' + (labels[key] || key) + '</span>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+      const mandDiv = document.createElement('div');
+      mandDiv.innerHTML = mandatoryHtml;
+      cards.appendChild(mandDiv);
+    }
     const sl = document.getElementById('strengthsList');
     const cl = document.getElementById('concernsList');
     sl.innerHTML = ''; cl.innerHTML = '';
     (result.strengths || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; sl.appendChild(li); });
-    (result.concerns || []).forEach(c => { const li = document.createElement('li'); li.textContent = c; cl.appendChild(li); });
+    (result.top_improvements || result.concerns || []).forEach(c => { const li = document.createElement('li'); li.textContent = c; cl.appendChild(li); });
     const vb = document.getElementById('verdictBox');
     vb.textContent = result.verdict || '';
     vb.className = 'verdict-box';
@@ -384,12 +492,12 @@
     const justs = lastResult.justifications || {};
     let total = 0;
     RUBRIC.forEach(r => { total += (scores[r.key] || 0); });
-    const lines = ['r/LLMPhysics Competition \u2014 Paper Evaluation', 'Score: ' + total + '/100', ''];
+    const lines = ['r/LLMPhysics Competition \u2014 Paper Evaluation', 'Score: ' + total + '/85 (self-audit)', ''];
     RUBRIC.forEach(r => { lines.push(r.name + ': ' + (scores[r.key] || 0) + '/' + r.max); if (justs[r.key]) lines.push('  ' + justs[r.key]); });
     lines.push('', 'Summary: ' + (lastResult.narrative || ''), '', 'Strengths:');
     (lastResult.strengths || []).forEach(s => lines.push('\u2022 ' + s));
-    lines.push('', 'Concerns:');
-    (lastResult.concerns || []).forEach(c => lines.push('\u2022 ' + c));
+    lines.push('', 'Top Improvements:');
+    (lastResult.top_improvements || lastResult.concerns || []).forEach(c => lines.push('\u2022 ' + c));
     lines.push('', 'Verdict: ' + (lastResult.verdict || ''), '', 'Scored by r/LLMPhysics AI Judge (safe-app-llmphysics)');
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
       const btn = document.getElementById('copyBtn');
