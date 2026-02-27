@@ -198,6 +198,7 @@
     <div class="section-label">Paper</div>
     <textarea id="paperInput" placeholder="Paste the full paper text here..."></textarea>
     <div class="char-count"><span id="charCount">0</span> characters</div>
+    <div id="lengthWarn" style="display:none; font-size:12px; color:#a05000; background:#fff4e6; border:1px solid #f6a623; border-radius:4px; padding:0.4rem 0.6rem; margin-top:0.3rem;"></div>
     <div class="url-row">
       <label>Or load from:</label>
       <input type="text" id="urlInput" placeholder="https://arxiv.org/abs/..." oninput="onUrlInput()">
@@ -270,7 +271,7 @@
   const STORAGE_KEY = 'safe_account';
 
   const PROVIDERS = {
-    groq:      { name: 'Groq',             prefix: 'gsk_',    model: 'llama-3.3-70b-versatile' },
+    groq:      { name: 'Groq',             prefix: 'gsk_',    model: 'llama-3.1-8b-instant' },
     gemini:    { name: 'Gemini',           prefix: 'AIza',    model: 'gemini-2.0-flash' },
     anthropic: { name: 'Anthropic (Claude)', prefix: 'sk-ant-', model: 'claude-haiku-4-5-20251001' },
     openai:    { name: 'OpenAI',           prefix: 'sk-',     model: 'gpt-4o-mini' },
@@ -335,10 +336,24 @@
     document.getElementById('paperInput').addEventListener('input', onPaperInput);
   })();
 
+  const MAX_CHARS = 40000; // ~10K tokens — safe for all free-tier providers
+
   function onPaperInput() {
     const len = document.getElementById('paperInput').value.length;
     document.getElementById('charCount').textContent = len.toLocaleString();
     document.getElementById('scoreBtn').disabled = len < 100;
+    const warn = document.getElementById('lengthWarn');
+    if (warn) {
+      if (len > MAX_CHARS) {
+        warn.textContent = '\u26a0\ufe0f Paper is very long (' + len.toLocaleString() + ' chars). It will be trimmed to the first ' + MAX_CHARS.toLocaleString() + ' chars before scoring to stay within free-tier limits.';
+        warn.style.display = 'block';
+      } else if (len > 28000) {
+        warn.textContent = '\u26a0\ufe0f Long paper (' + len.toLocaleString() + ' chars) — may hit Groq free-tier limits. Consider Gemini or Anthropic for large documents.';
+        warn.style.display = 'block';
+      } else {
+        warn.style.display = 'none';
+      }
+    }
   }
 
   function getApiCredentials() {
@@ -554,8 +569,11 @@ ${paperText}
 
   async function scorePaper() {
     hideError();
-    const paperText = document.getElementById('paperInput').value.trim();
+    let paperText = document.getElementById('paperInput').value.trim();
     if (paperText.length < 100) return;
+    if (paperText.length > MAX_CHARS) {
+      paperText = paperText.slice(0, MAX_CHARS) + '\n\n[...paper truncated at ' + MAX_CHARS.toLocaleString() + ' chars for token limit...]';
+    }
     const creds = getApiCredentials();
     if (!creds) { showApiForm(); showError('Please enter an API key to score papers.'); return; }
     setLoading(true);
