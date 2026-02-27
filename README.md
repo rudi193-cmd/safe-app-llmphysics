@@ -17,7 +17,7 @@ Total: 100 points
 
 ## Usage
 
-Open `site/index.html` in a browser. Uses your SAFE account API key (Gemini, Groq, or OpenAI) for scoring. No server required.
+Open `site/index.html` in a browser. Uses your API key (Gemini, Groq, OpenAI, or most others) for scoring. No server required.
 
 ## Competition
 
