@@ -1,286 +1,402 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>r/LLMPhysics Competition Paper Judge</title>
-    <style>
-        :root {
-            --bg: #f9f9f7; 
-            --fg: #1c1c1a; 
-            --fg-muted: #6b6b64; 
-            --accent: #2d6a4f; 
-            --accent-light: #e8f4ee; 
-            --border: #e2e2de; 
-            --max: 680px; 
-        }
-        body {
-            background-color: var(--bg);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            font-size: 16px;
-            line-height: 1.75;
-            max-width: var(--max);
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .nav-left {
-            display: flex;
-            align-items: center;
-        }
-        .SAFE-wordmark {
-            font-size: 1.5rem;
-            color: var(--accent);
-            font-family: 'Segoe UI Bold';
-            margin: 0 1rem 0 0;
-        }
-        .nav-link {
-            color: var(--fg);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-        .nav-link:hover {
-            color: var(--accent);
-        }
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-        .hero-eyebrow {
-            margin-bottom: 1rem;
-            font-size: 14px;
-            color: var(--fg-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1rem;
-        }
-        .hero-headline {
-            font-size: 2rem;
-            color: var(--accent);
-            margin-bottom: 1rem;
-        }
-        .hero-subline {
-            font-size: 16px;
-            color: var(--fg-muted);
-            margin-bottom: 2rem;
-        }
-        .hero-input {
-            position: relative;
-        }
-        .hero-input-label {
-            position: absolute;
-            top: 50%;
-            left: 50px;
-            transform: translateY(-50%);
-            color: var(--fg-muted);
-            pointer-events: none;
-        }
-        .paper-input {
-            width: 100%;
-            max-width: var(--max);
-            height: 300px;
-            padding: 1rem;
-            font-size: 16px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            resize: vertical;
-        }
-        .paper-input-placeholder {
-            font-size: 16px;
-            color: var(--fg-muted);
-        }
-        .rubric {
-            margin-bottom: 2rem;
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            width: 100%;
-            max-width: var(--max);
-        }
-        .rubric-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .rubric-header-text {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--fg);
-        }
-        .criterion-card {
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 1rem;
-            margin-bottom: 0.6rem;
-        }
-        .criterion-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 0.5rem;
-        }
-        .criterion-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--fg);
-        }
-        .criterion-score {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        .criterion-bar {
-            height: 4px;
-            background: var(--border);
-            border-radius: 2px;
-            margin-bottom: 0.5rem;
-        }
-        .criterion-bar-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 2px;
-            transition: width 0.6s ease;
-        }
-        .criterion-justification {
-            font-size: 13px;
-            color: var(--fg-muted);
-            line-height: 1.5;
-        }
-        .score-button {
-            padding: 1rem;
-            border: none;
-            border-radius: 4px;
-            width: 100%;
-            max-width: var(--max);
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--fg);
-            background-color: var(--accent);
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .score-button:hover {
-            background-color: var(--accent-light);
-        }
-        .score-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .loading-state {
-            font-size: 16px;
-            color: var(--fg-muted);
-            margin-top: 1rem;
-        }
-        .results {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-        }
-        .results-header {
-            font-size: 20px;
-            color: var(--accent);
-            margin-bottom: 1rem;
-        }
-        .results-score {
-            font-size: 24px;
-            color: var(--accent);
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-        .results-narrative {
-            font-size: 16px;
-            color: var(--fg);
-            margin-bottom: 2rem;
-        }
-        .copy-results-button {
-            padding: 1rem;
-            border: none;
-            border-radius: 4px;
-            width: 100%;
-            max-width: var(--max);
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--fg);
-            background-color: var(--accent);
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .copy-results-button:hover {
-            background-color: var(--accent-light);
-        }
-        .copy-results-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .footer {
-            font-size: 14px;
-            color: var(--fg-muted);
-            margin-top: 2rem;
-            text-align: center;
-        }
-        .footer-link {
-            color: var(--accent);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-        .footer-link:hover {
-            color: var(--accent-light);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>r/LLMPhysics Competition Paper Judge</title>
+  <style>
+    :root {
+      --bg: #f9f9f7;
+      --fg: #1c1c1a;
+      --fg-muted: #6b6b64;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ee;
+      --border: #e2e2de;
+      --max: 680px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      margin: 0;
+      padding: 0 1rem;
+    }
+    .container { max-width: var(--max); margin: 0 auto; }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+    .nav-brand { font-weight: 700; font-size: 15px; color: var(--accent); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-link { font-size: 14px; color: var(--fg-muted); text-decoration: none; }
+    .nav-link:hover { color: var(--accent); }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .hero { margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 1.75rem; font-weight: 700; color: var(--fg); margin: 0 0 0.6rem; line-height: 1.3; }
+    .hero .subline { font-size: 15px; color: var(--fg-muted); margin-bottom: 0.4rem; }
+    .hero .note { font-size: 13px; color: var(--fg-muted); }
+    .api-section { margin-bottom: 1.5rem; }
+    .api-chip { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 13px; background: var(--accent-light); color: var(--accent); border: 1px solid #b7d9c8; border-radius: 20px; padding: 0.25rem 0.75rem; }
+    .api-chip a { color: var(--fg-muted); font-size: 12px; margin-left: 0.25rem; cursor: pointer; text-decoration: underline; }
+    .api-form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; }
+    .api-form select, .api-form input[type="text"], .api-form input[type="password"] { font-size: 13px; border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.6rem; background: #fff; color: var(--fg); outline: none; }
+    .api-form select:focus, .api-form input:focus { border-color: var(--accent); }
+    .btn-sm { font-size: 13px; padding: 0.4rem 0.9rem; border: none; border-radius: 4px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; }
+    .btn-sm:hover { opacity: 0.88; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 0.4rem; }
+    textarea#paperInput { width: 100%; min-height: 300px; resize: vertical; font-size: 14px; font-family: inherit; line-height: 1.6; border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem 1rem; background: #fff; color: var(--fg); outline: none; }
+    textarea#paperInput:focus { border-color: var(--accent); }
+    .char-count { font-size: 12px; color: var(--fg-muted); text-align: right; margin-top: 0.2rem; }
+    .url-row { margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .url-row label { font-size: 13px; color: var(--fg-muted); }
+    .url-row input { font-size: 13px; flex: 1; border: 1px solid var(--border); border-radius: 4px; padding: 0.35rem 0.6rem; background: #f5f5f3; color: var(--fg-muted); }
+    .url-row .coming-soon { font-size: 11px; color: var(--fg-muted); font-style: italic; }
+    .rubric-toggle { display: flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--fg-muted); cursor: pointer; user-select: none; margin: 1rem 0 0; background: none; border: none; padding: 0; }
+    .rubric-toggle:hover { color: var(--accent); }
+    #rubricBody { display: none; margin-top: 0.75rem; }
+    #rubricBody.open { display: block; }
+    .rubric-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rubric-table th, .rubric-table td { border: 1px solid var(--border); padding: 0.4rem 0.75rem; text-align: left; }
+    .rubric-table th { background: var(--accent-light); font-weight: 600; font-size: 12px; }
+    .rubric-table tr:last-child td { font-weight: 700; }
+    .score-wrap { margin: 1.5rem 0; }
+    #scoreBtn { width: 100%; padding: 0.85rem; font-size: 15px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; letter-spacing: 0.02em; transition: opacity 0.15s; }
+    #scoreBtn:hover:not(:disabled) { opacity: 0.88; }
+    #scoreBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .dots::after { content: ''; animation: dots 1.2s steps(4, end) infinite; }
+    @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+    .error-box { background: #fff0f0; border: 1px solid #f5c6c6; border-radius: 4px; padding: 0.75rem 1rem; font-size: 13px; color: #b33030; margin-top: 0.75rem; }
+    #resultsSection { display: none; margin-top: 2rem; }
+    #resultsSection.visible { display: block; }
+    .results-eyebrow { margin-bottom: 1rem; }
+    .total-score { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 0.2rem; }
+    .total-label { font-size: 13px; color: var(--fg-muted); margin-bottom: 1.25rem; }
+    .narrative { font-size: 15px; color: var(--fg); margin-bottom: 1.5rem; padding: 1rem; background: var(--accent-light); border-radius: 4px; border-left: 3px solid var(--accent); }
+    .criterion-card { border: 1px solid var(--border); border-radius: 4px; padding: 1rem; margin-bottom: 0.6rem; }
+    .criterion-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+    .criterion-name { font-size: 14px; font-weight: 600; color: var(--fg); }
+    .criterion-score { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .criterion-bar { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 0.5rem; }
+    .criterion-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s ease; width: 0%; }
+    .criterion-justification { font-size: 13px; color: var(--fg-muted); line-height: 1.5; }
+    .strengths-concerns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    @media (max-width: 500px) { .strengths-concerns { grid-template-columns: 1fr; } }
+    .sc-block h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .sc-block.strengths h4 { color: var(--accent); }
+    .sc-block.concerns h4 { color: #8b4513; }
+    .sc-block ul { margin: 0; padding-left: 1.2rem; }
+    .sc-block li { font-size: 13px; color: var(--fg-muted); margin-bottom: 0.25rem; }
+    .verdict-box { border: 2px solid var(--accent); border-radius: 4px; padding: 0.75rem 1rem; font-weight: 700; font-size: 15px; color: var(--accent); text-align: center; margin-bottom: 1.25rem; }
+    .verdict-box.warn { border-color: #d4860a; color: #d4860a; }
+    .verdict-box.bad { border-color: #b33030; color: #b33030; }
+    #copyBtn { font-size: 13px; padding: 0.5rem 1.25rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--fg-muted); cursor: pointer; }
+    #copyBtn:hover { border-color: var(--accent); color: var(--accent); }
+    footer { margin-top: 3rem; padding: 1.5rem 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 12px; color: var(--fg-muted); flex-wrap: wrap; gap: 0.5rem; }
+    footer a { color: var(--fg-muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+  </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-left">
-            <a href="../index.html" class="SAFE-wordmark nav-link">SAFE</a>
-        </div>
-        <div class="nav-right">
-            <a href="#" class="nav-link">r/LLMPhysics</a>
-        </div>
-    </nav>
-    <section class="hero">
-        <div class="hero-eyebrow">
-            COMPETITION JUDGE
-        </div>
-        <h1 class="hero-headline">
-            r/LLMPhysics Paper Evaluation
-        </h1>
-        <p class="hero-subline">
-            <span style="font-size: 16px;">Paste a paper below.</span> 
-            <span class="hero-input-label">The judge scores it against the official competition rubric.</span>
-        </p>
-        <div class="hero-input">
-            <label for="paper-input" class="hero-input-label">Paste the full paper text here...</label>
-            <textarea id="paper-input" class="paper-input" placeholder="Paste the full paper text here..."></textarea>
-            <div class="char-count">
-                <span id="char-count">0</span>
-                <span>/100</span>
-            </div>
-            <div class="paper-input-url">
-                <label for="paper-input-url">Coming soon:</label>
-                <input type="url" id="paper-input-url" class="paper-input" disabled>
-            </div>
-            <button class="score-button" id="score-button" disabled="true">Score This Paper</button>
-            <div class="loading-state hidden" id="loading-state">Judging...</div>
-            <div id="results">
-                <div class="results-header">EVALUATION RESULTS</div>
-                <div class="results-score accent" id="results-score"></div>
-                <div class="results-narrative" id="results-narrative"></div>
-            </div>
-        </div>
-    </section>
-    <footer class="footer">
-        SAFE · Session-Authorized, Fully Explicit &nbsp;|&nbsp; 
-        <a href="#" class="footer-link">About</a
-  </script>
+<div class="container">
+  <nav>
+    <a href="../index.html" class="nav-brand">SAFE</a>
+    <a href="https://www.reddit.com/r/LLMPhysics/" target="_blank" class="nav-link">r/LLMPhysics</a>
+  </nav>
+  <div class="hero">
+    <div class="eyebrow">Competition Judge</div>
+    <h1>r/LLMPhysics Paper Evaluation</h1>
+    <p class="subline">Paste a paper below. The judge scores it against the official competition rubric &mdash; concept, execution, citations, assumptions, research question.</p>
+    <p class="note">Scoring uses your AI provider from SAFE account, or enter a key below.</p>
+  </div>
+  <div class="api-section" id="apiSection">
+    <div id="apiChip" style="display:none;">
+      <span class="api-chip">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
+        Using <strong id="chipProvider"></strong> from your SAFE account
+        <a onclick="showApiForm()">Change</a>
+      </span>
+    </div>
+    <div id="apiForm">
+      <div class="section-label" style="margin-bottom:0.5rem;">API Key</div>
+      <div class="api-form">
+        <select id="providerSelect">
+          <option value="gemini">Gemini (Google)</option>
+          <option value="groq">Groq</option>
+          <option value="openai">OpenAI</option>
+        </select>
+        <input type="password" id="apiKeyInput" placeholder="Paste API key..." style="flex:1;min-width:180px;">
+        <button class="btn-sm" onclick="saveApiKey()">Save</button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:1rem;">
+    <div class="section-label">Paper</div>
+    <textarea id="paperInput" placeholder="Paste the full paper text here..."></textarea>
+    <div class="char-count"><span id="charCount">0</span> characters</div>
+    <div class="url-row">
+      <label for="urlInput">Or paste a URL:</label>
+      <input type="text" id="urlInput" placeholder="https://arxiv.org/abs/..." disabled>
+      <span class="coming-soon">coming soon</span>
+    </div>
+  </div>
+  <button class="rubric-toggle" onclick="toggleRubric()" id="rubricToggleBtn">
+    <span>View rubric</span>
+    <span id="rubricArrow">&#9660;</span>
+  </button>
+  <div id="rubricBody">
+    <table class="rubric-table">
+      <thead><tr><th>Criterion</th><th>Points</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Research Question</td><td>/20</td><td>Clear, legitimate scientific question? Relevant to modern physics?</td></tr>
+        <tr><td>Citations</td><td>/15</td><td>Modern, relevant sources cited? Not exclusively fringe/deprecated?</td></tr>
+        <tr><td>Minimal Assumptions</td><td>/20</td><td>Derives from fewest necessary assumptions? No overreach?</td></tr>
+        <tr><td>Scientific Concept</td><td>/25</td><td>Coherent, testable/falsifiable central idea? Non-trivial?</td></tr>
+        <tr><td>Execution</td><td>/20</td><td>Clear argument, internal consistency, presentation quality?</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>/100</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="score-wrap">
+    <button id="scoreBtn" disabled onclick="scorePaper()">Score This Paper</button>
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+  </div>
+  <div id="resultsSection">
+    <div class="results-eyebrow eyebrow">Evaluation Results</div>
+    <div class="total-score" id="totalScore">&#8212;</div>
+    <div class="total-label">out of 100</div>
+    <div class="narrative" id="narrativeText"></div>
+    <div id="criterionCards"></div>
+    <div class="strengths-concerns">
+      <div class="sc-block strengths"><h4>Strengths</h4><ul id="strengthsList"></ul></div>
+      <div class="sc-block concerns"><h4>Concerns</h4><ul id="concernsList"></ul></div>
+    </div>
+    <div class="verdict-box" id="verdictBox"></div>
+    <button id="copyBtn" onclick="copyResults()">Copy Results</button>
+  </div>
+  <footer>
+    <span>SAFE &middot; Session-Authorized, Fully Explicit</span>
+    <span>
+      <a href="https://www.reddit.com/r/LLMPhysics/" target="_blank">r/LLMPhysics</a>
+      &nbsp;&middot;&nbsp;<a href="#">About</a>
+      &nbsp;&middot;&nbsp;<a href="#">Rules</a>
+    </span>
+  </footer>
+</div>
+<script>
+  const STORAGE_KEY = 'safe_account';
+  const RUBRIC = [
+    { name: 'Research Question', max: 20, key: 'research_question', desc: 'Clear, legitimate scientific question; relevant to modern physics' },
+    { name: 'Citations', max: 15, key: 'citations', desc: 'Modern, relevant sources; not exclusively fringe/deprecated' },
+    { name: 'Minimal Assumptions', max: 20, key: 'minimal_assumptions', desc: 'Derives from fewest necessary assumptions; no overreach' },
+    { name: 'Scientific Concept', max: 25, key: 'scientific_concept', desc: 'Coherent, testable/falsifiable central idea; non-trivial' },
+    { name: 'Execution', max: 20, key: 'execution', desc: 'Clear argument structure, internal consistency, presentation quality' },
+  ];
+  let lastResult = null;
+
+  (function init() {
+    const creds = getApiCredentials();
+    if (creds) {
+      document.getElementById('apiChip').style.display = 'block';
+      document.getElementById('apiForm').style.display = 'none';
+      document.getElementById('chipProvider').textContent = creds.provider;
+    }
+    document.getElementById('paperInput').addEventListener('input', onPaperInput);
+  })();
+
+  function onPaperInput() {
+    const len = document.getElementById('paperInput').value.length;
+    document.getElementById('charCount').textContent = len.toLocaleString();
+    document.getElementById('scoreBtn').disabled = len < 100;
+  }
+
+  function getApiCredentials() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const acct = JSON.parse(raw);
+        if (acct.api_key && acct.api_provider) return { provider: acct.api_provider, key: acct.api_key, source: 'safe_account' };
+      }
+    } catch(e) {}
+    const tmpKey = sessionStorage.getItem('temp_llm_key');
+    const tmpProvider = sessionStorage.getItem('temp_llm_provider');
+    if (tmpKey && tmpProvider) return { provider: tmpProvider, key: tmpKey, source: 'manual' };
+    return null;
+  }
+
+  function saveApiKey() {
+    const provider = document.getElementById('providerSelect').value;
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (!key) { alert('Please enter an API key.'); return; }
+    sessionStorage.setItem('temp_llm_key', key);
+    sessionStorage.setItem('temp_llm_provider', provider);
+    document.getElementById('chipProvider').textContent = provider;
+    document.getElementById('apiChip').style.display = 'block';
+    document.getElementById('apiForm').style.display = 'none';
+  }
+
+  function showApiForm() {
+    document.getElementById('apiChip').style.display = 'none';
+    document.getElementById('apiForm').style.display = 'block';
+  }
+
+  function toggleRubric() {
+    const body = document.getElementById('rubricBody');
+    const arrow = document.getElementById('rubricArrow');
+    body.classList.toggle('open');
+    arrow.innerHTML = body.classList.contains('open') ? '&#9650;' : '&#9660;';
+  }
+
+  function buildJudgePrompt(paperText) {
+    return 'You are an impartial judge for the r/LLMPhysics community paper competition.\n'
+      + 'Score the following paper against this rubric. Return ONLY valid JSON, no markdown, no explanation.\n\n'
+      + 'Rubric:\n'
+      + '- research_question: /20 - Clear, legitimate scientific question; relevant to modern physics\n'
+      + '- citations: /15 - Modern, relevant sources; not exclusively fringe/deprecated\n'
+      + '- minimal_assumptions: /20 - Derives from fewest necessary assumptions; no overreach\n'
+      + '- scientific_concept: /25 - Coherent, testable/falsifiable central idea; non-trivial\n'
+      + '- execution: /20 - Clear argument, internal consistency, presentation\n\n'
+      + 'Return ONLY this JSON structure:\n'
+      + '{"scores":{"research_question":0,"citations":0,"minimal_assumptions":0,"scientific_concept":0,"execution":0},'
+      + '"justifications":{"research_question":"","citations":"","minimal_assumptions":"","scientific_concept":"","execution":""},'
+      + '"narrative":"2-3 sentence summary",'
+      + '"strengths":["strength1","strength2","strength3"],'
+      + '"concerns":["concern1","concern2","concern3"],'
+      + '"verdict":"Recommended for submission"}\n\n'
+      + 'Valid verdict values: "Recommended for submission" | "Needs revision" | "Significant rework needed"\n\n'
+      + 'Paper to evaluate:\n---\n' + paperText + '\n---';
+  }
+
+  async function callLLM(prompt, creds) {
+    if (creds.provider === 'gemini') {
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + creds.key,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) }
+      );
+      if (!res.ok) throw new Error('Gemini API error: ' + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error('Gemini: ' + data.error.message);
+      return data.candidates[0].content.parts[0].text;
+    } else if (creds.provider === 'groq') {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
+          body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
+      );
+      if (!res.ok) throw new Error('Groq API error: ' + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error('Groq: ' + data.error.message);
+      return data.choices[0].message.content;
+    } else {
+      const res = await fetch('https://api.openai.com/v1/chat/completions',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + creds.key },
+          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 2048 }) }
+      );
+      if (!res.ok) throw new Error('OpenAI API error: ' + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error('OpenAI: ' + data.error.message);
+      return data.choices[0].message.content;
+    }
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('scoreBtn');
+    if (on) {
+      btn.disabled = true;
+      btn.innerHTML = 'Judging<span class="dots"></span>';
+    } else {
+      btn.innerHTML = 'Score This Paper';
+      btn.disabled = document.getElementById('paperInput').value.length < 100;
+    }
+  }
+
+  function showError(msg) { const b = document.getElementById('errorBox'); b.textContent = msg; b.style.display = 'block'; }
+  function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+
+  async function scorePaper() {
+    hideError();
+    const paperText = document.getElementById('paperInput').value.trim();
+    if (paperText.length < 100) return;
+    const creds = getApiCredentials();
+    if (!creds) { showApiForm(); showError('Please enter an API key to score papers.'); return; }
+    setLoading(true);
+    try {
+      const prompt = buildJudgePrompt(paperText);
+      const raw = await callLLM(prompt, creds);
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Model did not return valid JSON. Try again.');
+      const result = JSON.parse(jsonMatch[0]);
+      lastResult = result;
+      renderResults(result);
+    } catch(e) {
+      showError('Error: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResults(result) {
+    const scores = result.scores || {};
+    const justs = result.justifications || {};
+    let total = 0;
+    RUBRIC.forEach(r => { total += (scores[r.key] || 0); });
+    document.getElementById('totalScore').textContent = total;
+    document.getElementById('narrativeText').textContent = result.narrative || '';
+    const cards = document.getElementById('criterionCards');
+    cards.innerHTML = '';
+    RUBRIC.forEach(r => {
+      const score = scores[r.key] || 0;
+      const pct = Math.round((score / r.max) * 100);
+      const card = document.createElement('div');
+      card.className = 'criterion-card';
+      card.innerHTML = '<div class="criterion-header"><span class="criterion-name">' + r.name + '</span>'
+        + '<span class="criterion-score">' + score + ' / ' + r.max + '</span></div>'
+        + '<div class="criterion-bar"><div class="criterion-bar-fill" style="width:0%" data-pct="' + pct + '"></div></div>'
+        + '<div class="criterion-justification">' + (justs[r.key] || '') + '</div>';
+      cards.appendChild(card);
+    });
+    requestAnimationFrame(() => {
+      cards.querySelectorAll('.criterion-bar-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+    });
+    const sl = document.getElementById('strengthsList');
+    const cl = document.getElementById('concernsList');
+    sl.innerHTML = ''; cl.innerHTML = '';
+    (result.strengths || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; sl.appendChild(li); });
+    (result.concerns || []).forEach(c => { const li = document.createElement('li'); li.textContent = c; cl.appendChild(li); });
+    const vb = document.getElementById('verdictBox');
+    vb.textContent = result.verdict || '';
+    vb.className = 'verdict-box';
+    if (result.verdict === 'Needs revision') vb.classList.add('warn');
+    if (result.verdict === 'Significant rework needed') vb.classList.add('bad');
+    const section = document.getElementById('resultsSection');
+    section.classList.add('visible');
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyResults() {
+    if (!lastResult) return;
+    const scores = lastResult.scores || {};
+    const justs = lastResult.justifications || {};
+    let total = 0;
+    RUBRIC.forEach(r => { total += (scores[r.key] || 0); });
+    const lines = ['r/LLMPhysics Competition \u2014 Paper Evaluation', 'Score: ' + total + '/100', ''];
+    RUBRIC.forEach(r => { lines.push(r.name + ': ' + (scores[r.key] || 0) + '/' + r.max); if (justs[r.key]) lines.push('  ' + justs[r.key]); });
+    lines.push('', 'Summary: ' + (lastResult.narrative || ''), '', 'Strengths:');
+    (lastResult.strengths || []).forEach(s => lines.push('\u2022 ' + s));
+    lines.push('', 'Concerns:');
+    (lastResult.concerns || []).forEach(c => lines.push('\u2022 ' + c));
+    lines.push('', 'Verdict: ' + (lastResult.verdict || ''), '', 'Scored by r/LLMPhysics AI Judge (safe-app-llmphysics)');
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy Results'; }, 2000);
+    }).catch(() => { alert(lines.join('\n')); });
+  }
+</script>
 </body>
 </html>
